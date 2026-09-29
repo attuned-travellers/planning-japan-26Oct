@@ -28,21 +28,57 @@
   // ---------- state (localStorage 는 개인 편의용, 실패해도 동작) ----------
   const BASE = JSON.stringify(TRIP.events);
   let events = JSON.parse(BASE);
+  const STALE_KEY = `${STORE_KEY}:stale`;
   let dirty = false;
+  let stale = null; // 원본이 바뀌기 전에 이 브라우저에서 편집해 둔 일정 (복원 대기)
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-    // schedule.js 원본이 바뀌었으면 예전 로컬 편집은 버림
-    if (saved && saved.base === BASE && Array.isArray(saved.events)) { events = saved.events; dirty = true; }
+    if (saved && Array.isArray(saved.events)) {
+      if (saved.base === BASE) { events = saved.events; dirty = true; }
+      else {
+        // schedule.js 원본이 바뀜 → 편집은 버리지 않고 따로 보관해 두고 복원 안내
+        localStorage.removeItem(STORE_KEY);
+        if (JSON.stringify(saved.events) !== BASE) localStorage.setItem(STALE_KEY, JSON.stringify(saved));
+      }
+    }
+    stale = JSON.parse(localStorage.getItem(STALE_KEY) || "null");
   } catch (_) { /* storage 사용 불가 */ }
 
   function persist() {
     dirty = JSON.stringify(events) !== BASE;
     try {
-      if (dirty) localStorage.setItem(STORE_KEY, JSON.stringify({ base: BASE, events }));
+      if (dirty) localStorage.setItem(STORE_KEY, JSON.stringify({ base: BASE, events, savedAt: Date.now() }));
       else localStorage.removeItem(STORE_KEY);
     } catch (_) { /* ignore */ }
     updateSaveState();
   }
+
+  function dropStale() {
+    stale = null;
+    try { localStorage.removeItem(STALE_KEY); } catch (_) { /* ignore */ }
+    $("restore").hidden = true;
+  }
+
+  function renderRestoreBanner() {
+    const box = $("restore");
+    if (!stale || !Array.isArray(stale.events)) { box.hidden = true; return; }
+    const when = stale.savedAt
+      ? (() => { const d = new Date(stale.savedAt); return ` (${d.getMonth() + 1}/${d.getDate()} ${toHHMM(d.getHours() * 60 + d.getMinutes())} 편집)`; })()
+      : "";
+    $("restore-when").textContent = when;
+    box.hidden = false;
+  }
+  $("btn-restore").addEventListener("click", () => {
+    if (dirty && !confirm("지금 화면의 편집 대신 보관된 편집으로 바꿀까요?")) return;
+    events = stale.events;
+    dropStale();
+    persist(); // 새 원본 기준으로 다시 저장 → 이후 새로고침에도 유지
+    renderEvents();
+  });
+  $("btn-discard").addEventListener("click", () => {
+    if (!confirm("보관된 예전 편집을 지울까요? 되돌릴 수 없어요.")) return;
+    dropStale();
+  });
   function updateSaveState() {
     $("save-state").textContent = dirty ? "● 이 브라우저에 변경 저장됨" : "";
   }
@@ -398,6 +434,7 @@ window.TRIP = ${body};
   fillSelects();
   renderEvents();
   updateSaveState();
+  renderRestoreBanner();
   // 첫 일정 근처로 스크롤
   const first = Math.min(...events.map((e) => toMin(e.start)), 9 * 60);
   scroller.scrollTop = Math.max(0, ((first - DAY_START) / STEP - 1) * slotH());

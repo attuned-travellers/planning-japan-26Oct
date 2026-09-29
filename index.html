@@ -27,6 +27,17 @@
   </div>
 
   <main class="wrap">
+    <div class="restore" id="restore" hidden role="status">
+      <div class="restore-text">
+        <b>원본 일정이 업데이트됐어요.</b>
+        이 브라우저에서 예전에 편집한 내용<span id="restore-when"></span>을 따로 보관해 뒀어요.
+        복원하면 새 원본 대신 예전 편집이 보여요.
+      </div>
+      <div class="restore-actions">
+        <button class="btn" id="btn-restore" type="button">내 편집 복원</button>
+        <button class="btn ghost" id="btn-discard" type="button">버리기</button>
+      </div>
+    </div>
     <p class="hint">일정 블록을 <b>드래그</b>해서 옮기고, 아래 모서리를 끌어 길이를 바꿔요. 빈 칸을 누르면 일정 추가, 블록을 누르면 수정할 수 있어요.</p>
     <div class="cal-scroll" id="cal-scroll">
       <div class="cal" id="cal"></div>
