@@ -12,7 +12,6 @@
     <div class="eyebrow" id="eyebrow"></div>
     <h1 id="title"></h1>
     <div class="stats" id="stats"></div>
-    <div class="notes" id="notes"></div>
   </header>
 
   <div class="toolbar">
@@ -20,8 +19,10 @@
       <div class="legend" id="legend"></div>
       <div class="actions">
         <span class="save-state" id="save-state"></span>
+        <button class="btn ghost" id="btn-notes" type="button">메모</button>
         <button class="btn" id="btn-export" type="button">내보내기</button>
         <button class="btn ghost" id="btn-reset" type="button">초기화</button>
+        <button class="btn ghost icon" id="btn-manual" type="button" aria-label="사용법" title="사용법">?</button>
       </div>
     </div>
   </div>
@@ -38,16 +39,39 @@
         <button class="btn ghost" id="btn-discard" type="button">버리기</button>
       </div>
     </div>
-    <p class="hint">일정 블록을 <b>드래그</b>해서 옮기고, 아래 모서리를 끌어 길이를 바꿔요. 빈 칸을 누르면 일정 추가, 블록을 누르면 수정할 수 있어요.</p>
     <div class="cal-scroll" id="cal-scroll">
       <div class="cal" id="cal"></div>
     </div>
   </main>
 
-  <footer class="wrap">
-    바꾼 일정은 이 브라우저에만 저장돼요. 친구와 공유하려면 <b>내보내기</b>로 받은 내용을 <code>assets/schedule.js</code>에 붙여넣고 커밋하세요.
-    · 개인정보(숙소·항공·예약번호)는 이 페이지에 올리지 않습니다.
-  </footer>
+  <dialog id="notes-dialog">
+    <form method="dialog" class="editor">
+      <h2>메모</h2>
+      <div class="notes" id="notes"></div>
+      <div class="ed-actions">
+        <span class="spacer"></span>
+        <button class="btn">닫기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="manual">
+    <form method="dialog" class="editor">
+      <h2>사용법</h2>
+      <ul class="manual">
+        <li>일정 블록을 <b>드래그</b>해서 다른 날짜·시간으로 옮겨요. (30분 단위)</li>
+        <li>블록 <b>아래 모서리</b>를 끌면 길이가 바뀌어요.</li>
+        <li><b>빈 칸</b>을 누르면 일정 추가, <b>블록</b>을 누르면 수정·삭제할 수 있어요.</li>
+        <li>바꾼 일정은 <b>이 브라우저에만</b> 저장돼요. 친구와 공유하려면 <b>내보내기</b>로 받은 내용을 <code>assets/schedule.js</code>에 붙여넣고 커밋하세요.</li>
+        <li><b>초기화</b>를 누르면 이 브라우저의 편집을 지우고 원본으로 돌아가요.</li>
+        <li>개인정보(숙소·항공·예약번호)는 이 페이지에 올리지 않아요.</li>
+      </ul>
+      <div class="ed-actions">
+        <span class="spacer"></span>
+        <button class="btn">닫기</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="editor">
     <form method="dialog" class="editor">

@@ -15,7 +15,7 @@ window.TRIP = {
   end: "2026-10-22",
 
   // 캘린더에 보이는 시간 범위 (30분 단위)
-  dayStart: "07:00",
+  dayStart: "00:00",
   dayEnd: "24:00",
 
   // 도시 — days[].city 에 key 를 넣으면 날짜 머리에 색이 붙습니다.

@@ -19,7 +19,7 @@
   const dateLabel = (iso) => { const d = parseDate(iso); return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAYS[d.getDay()]})`; };
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-  const DAY_START = toMin(TRIP.dayStart || "07:00");
+  const DAY_START = toMin(TRIP.dayStart || "00:00");
   const DAY_END = toMin(TRIP.dayEnd || "24:00");
   const SLOTS = (DAY_END - DAY_START) / STEP;
   const slotH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slot-h")) || 26;
@@ -407,6 +407,10 @@
 window.TRIP = ${body};
 `;
   }
+
+  $("btn-manual").addEventListener("click", () => $("manual").showModal());
+  $("btn-notes").hidden = !(TRIP.notes && TRIP.notes.length);
+  $("btn-notes").addEventListener("click", () => $("notes-dialog").showModal());
 
   $("btn-export").addEventListener("click", () => {
     $("export-text").value = exportText();
