@@ -26,26 +26,35 @@
   const tagOf = (ev) => TRIP.tags[ev.tag] || { label: "", color: "#7a7466" };
 
   // ---------- state (localStorage 는 개인 편의용, 실패해도 동작) ----------
-  const BASE = JSON.stringify(TRIP.events);
-  let events = JSON.parse(BASE);
+  // 일정 내용 비교용 서명 — 순서·키 순서·파일 포맷이 달라도 내용이 같으면 같은 값
+  const sig = (list) => JSON.stringify(
+    list.map((e) => [e.id, e.date, e.start, e.end, e.title, e.tag || "", e.note || ""]).sort()
+  );
+  const BASE = sig(TRIP.events);
+  let events = JSON.parse(JSON.stringify(TRIP.events));
   const STALE_KEY = `${STORE_KEY}:stale`;
   let dirty = false;
   let stale = null; // 원본이 바뀌기 전에 이 브라우저에서 편집해 둔 일정 (복원 대기)
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
     if (saved && Array.isArray(saved.events)) {
-      if (saved.base === BASE) { events = saved.events; dirty = true; }
+      if (saved.base === BASE) { events = saved.events; dirty = sig(events) !== BASE; }
       else {
         // schedule.js 원본이 바뀜 → 편집은 버리지 않고 따로 보관해 두고 복원 안내
+        // (내보내기 → 커밋한 경우처럼 내용이 같으면 조용히 정리)
         localStorage.removeItem(STORE_KEY);
-        if (JSON.stringify(saved.events) !== BASE) localStorage.setItem(STALE_KEY, JSON.stringify(saved));
+        if (sig(saved.events) !== BASE) localStorage.setItem(STALE_KEY, JSON.stringify(saved));
       }
     }
     stale = JSON.parse(localStorage.getItem(STALE_KEY) || "null");
+    if (stale && Array.isArray(stale.events) && sig(stale.events) === BASE) {
+      localStorage.removeItem(STALE_KEY);
+      stale = null;
+    }
   } catch (_) { /* storage 사용 불가 */ }
 
   function persist() {
-    dirty = JSON.stringify(events) !== BASE;
+    dirty = sig(events) !== BASE;
     try {
       if (dirty) localStorage.setItem(STORE_KEY, JSON.stringify({ base: BASE, events, savedAt: Date.now() }));
       else localStorage.removeItem(STORE_KEY);
@@ -417,7 +426,7 @@ window.TRIP = ${body};
   $("btn-reset").addEventListener("click", () => {
     if (!dirty) return;
     if (!confirm("이 브라우저에서 바꾼 내용을 지우고 schedule.js 원본으로 되돌릴까요?")) return;
-    events = JSON.parse(BASE);
+    events = JSON.parse(JSON.stringify(TRIP.events));
     persist();
     renderEvents();
   });
