@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kyoto · Osaka Schedule</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="hero wrap">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="title"></h1>
+    <div class="stats" id="stats"></div>
+    <div class="notes" id="notes"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="wrap row">
+      <div class="legend" id="legend"></div>
+      <div class="actions">
+        <span class="save-state" id="save-state"></span>
+        <button class="btn" id="btn-export" type="button">내보내기</button>
+        <button class="btn ghost" id="btn-reset" type="button">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <p class="hint">일정 블록을 <b>드래그</b>해서 옮기고, 아래 모서리를 끌어 길이를 바꿔요. 빈 칸을 누르면 일정 추가, 블록을 누르면 수정할 수 있어요.</p>
+    <div class="cal-scroll" id="cal-scroll">
+      <div class="cal" id="cal"></div>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    바꾼 일정은 이 브라우저에만 저장돼요. 친구와 공유하려면 <b>내보내기</b>로 받은 내용을 <code>assets/schedule.js</code>에 붙여넣고 커밋하세요.
+    · 개인정보(숙소·항공·예약번호)는 이 페이지에 올리지 않습니다.
+  </footer>
+
+  <dialog id="editor">
+    <form method="dialog" class="editor">
+      <h2 id="ed-heading">일정</h2>
+      <label>제목<input name="title" required maxlength="60" autocomplete="off"></label>
+      <div class="ed-row">
+        <label>날짜<select name="date"></select></label>
+        <label>종류<select name="tag"></select></label>
+      </div>
+      <div class="ed-row">
+        <label>시작<select name="start"></select></label>
+        <label>끝<select name="end"></select></label>
+      </div>
+      <label>메모<input name="note" maxlength="120" autocomplete="off" placeholder="선택"></label>
+      <div class="ed-actions">
+        <button class="btn danger" value="delete" id="ed-delete" formnovalidate>삭제</button>
+        <span class="spacer"></span>
+        <button class="btn ghost" value="cancel" formnovalidate>취소</button>
+        <button class="btn" value="save">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="exporter">
+    <form method="dialog" class="editor">
+      <h2>내보내기</h2>
+      <p class="muted">아래 내용을 <code>assets/schedule.js</code>에 통째로 붙여넣고 커밋하면 친구도 같은 일정을 봐요.</p>
+      <textarea id="export-text" readonly spellcheck="false"></textarea>
+      <div class="ed-actions">
+        <span class="spacer"></span>
+        <button class="btn ghost" value="close">닫기</button>
+        <button class="btn" type="button" id="btn-copy">복사</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="assets/schedule.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
