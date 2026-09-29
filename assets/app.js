@@ -97,14 +97,6 @@
     const range = el("span", "stat");
     range.innerHTML = `<b>${s.getMonth() + 1}/${s.getDate()} – ${e.getMonth() + 1}/${e.getDate()}</b> · ${nights}박 ${nights + 1}일`;
     stats.appendChild(range);
-    for (const key of Object.keys(TRIP.cities)) {
-      if (key === "move") continue;
-      const n = TRIP.days.filter((d) => d.city === key).length;
-      if (!n) continue;
-      const st = el("span", "stat");
-      st.innerHTML = `${TRIP.cities[key].label} <b>${n}</b>일`;
-      stats.appendChild(st);
-    }
     for (const note of TRIP.notes || []) {
       const n = el("div", "note");
       n.appendChild(el("b", null, note.title));
@@ -139,8 +131,6 @@
       const wd = parseDate(day.date).getDay();
       top.appendChild(el("span", "date" + (wd === 0 ? " sun" : wd === 6 ? " sat" : ""), dateLabel(day.date)));
       h.appendChild(top);
-      h.appendChild(el("div", "theme", day.theme || ""));
-      if (city) h.appendChild(el("span", "city", city.label));
       cal.appendChild(h);
     });
 
