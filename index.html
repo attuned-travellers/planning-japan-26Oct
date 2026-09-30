@@ -25,6 +25,11 @@
         <button class="btn ghost icon" id="btn-manual" type="button" aria-label="사용법" title="사용법">?</button>
       </div>
     </div>
+    <!-- 모바일 전용: 날짜 탭 + 보기 전환 -->
+    <div class="wrap daybar">
+      <div class="day-tabs" id="day-tabs" role="tablist" aria-label="날짜"></div>
+      <button class="btn ghost sm" id="btn-view" type="button"></button>
+    </div>
   </div>
 
   <main class="wrap">
@@ -62,10 +67,12 @@
         <li>일정 블록을 <b>드래그</b>해서 다른 날짜·시간으로 옮겨요. (30분 단위)</li>
         <li>블록 <b>아래 모서리</b>를 끌면 길이가 바뀌어요.</li>
         <li><b>빈 칸</b>을 누르면 일정 추가, <b>블록</b>을 누르면 수정·삭제할 수 있어요.</li>
+        <li><b>폰에서는</b> 블록을 <b>길게 누른 뒤</b> 끌어서 옮겨요. 그냥 쓸면 스크롤돼요. 날짜 탭을 누르거나 좌우로 밀면 다른 날로 넘어가요.</li>
         <li>바꾼 일정은 <b>이 브라우저에만</b> 저장돼요. 친구와 공유하려면 <b>내보내기</b>로 받은 내용을 <code>assets/schedule.js</code>에 붙여넣고 커밋하세요.</li>
         <li><b>초기화</b>를 누르면 이 브라우저의 편집을 지우고 원본으로 돌아가요.</li>
         <li>개인정보(숙소·항공·예약번호)는 이 페이지에 올리지 않아요.</li>
       </ul>
+      <div class="legend" id="legend-manual" aria-label="색 구분"></div>
       <div class="ed-actions">
         <span class="spacer"></span>
         <button class="btn">닫기</button>

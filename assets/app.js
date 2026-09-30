@@ -112,12 +112,14 @@
       n.appendChild(document.createTextNode(note.text));
       $("notes").appendChild(n);
     }
-    for (const t of Object.values(TRIP.tags)) {
-      const p = el("span", "pill");
-      p.style.setProperty("--c", t.color);
-      p.appendChild(el("i"));
-      p.appendChild(document.createTextNode(t.label));
-      $("legend").appendChild(p);
+    for (const box of [$("legend"), $("legend-manual")]) {
+      for (const t of Object.values(TRIP.tags)) {
+        const p = el("span", "pill");
+        p.style.setProperty("--c", t.color);
+        p.appendChild(el("i"));
+        p.appendChild(document.createTextNode(t.label));
+        box.appendChild(p);
+      }
     }
   }
 
@@ -134,6 +136,7 @@
     TRIP.days.forEach((day, i) => {
       const city = TRIP.cities[day.city];
       const h = el("div", "day-head" + (day.date === todayIso ? " today" : ""));
+      h.dataset.date = day.date;
       if (city) h.style.setProperty("--c", city.color);
       const top = el("div", "top");
       top.appendChild(el("span", "num", `DAY ${i + 1}`));
@@ -166,6 +169,91 @@
       cal.appendChild(col);
     }
   }
+
+  // ---------- 보기: 모바일은 하루씩 (날짜 탭·스와이프), 원하면 전체 ----------
+  const VIEW_KEY = "trip-schedule:view";
+  const mobileMq = window.matchMedia("(max-width: 640px)");
+  let viewPref = "day";
+  try { viewPref = localStorage.getItem(VIEW_KEY) || "day"; } catch (_) { /* ignore */ }
+  let activeDate = (() => {
+    const t = isoOf(new Date());
+    return TRIP.days.some((d) => d.date === t) ? t : TRIP.days[0].date;
+  })();
+  const dayMode = () => mobileMq.matches && viewPref === "day";
+
+  function buildDayTabs() {
+    const box = $("day-tabs");
+    TRIP.days.forEach((day, i) => {
+      const b = el("button", "day-tab");
+      b.type = "button";
+      b.dataset.date = day.date;
+      b.setAttribute("role", "tab");
+      const city = TRIP.cities[day.city];
+      if (city) b.style.setProperty("--c", city.color);
+      const d = parseDate(day.date);
+      b.appendChild(el("span", "n", `D${i + 1} · ${WEEKDAYS[d.getDay()]}`));
+      b.appendChild(el("span", "d", `${d.getMonth() + 1}/${d.getDate()}`));
+      b.setAttribute("aria-label", dateLabel(day.date));
+      b.addEventListener("click", () => {
+        activeDate = day.date;
+        if (dayMode()) applyView();
+        else {
+          applyView();
+          const col = cols.get(day.date);
+          scroller.scrollTo({ left: col.offsetLeft - col.parentElement.firstChild.offsetWidth, behavior: "smooth" });
+        }
+      });
+      box.appendChild(b);
+    });
+    $("btn-view").addEventListener("click", () => {
+      viewPref = viewPref === "day" ? "all" : "day";
+      try { localStorage.setItem(VIEW_KEY, viewPref); } catch (_) { /* ignore */ }
+      applyView();
+    });
+  }
+
+  function applyView() {
+    const dm = dayMode();
+    cal.classList.toggle("day-mode", dm);
+    cal.querySelectorAll(".day-head, .col").forEach((n) => n.classList.toggle("active", n.dataset.date === activeDate));
+    for (const b of $("day-tabs").children) {
+      const on = b.dataset.date === activeDate;
+      b.setAttribute("aria-selected", on);
+      if (on && dm) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    $("btn-view").textContent = dm ? "전체" : "하루씩";
+    if (dm) scroller.scrollLeft = 0;
+    renderNowLine();
+  }
+
+  function stepDay(delta) {
+    const i = TRIP.days.findIndex((d) => d.date === activeDate);
+    const next = TRIP.days[i + delta];
+    if (!next) return;
+    activeDate = next.date;
+    applyView();
+  }
+
+  // 하루 보기에서 좌우 스와이프로 날짜 이동
+  let swipe = null;
+  scroller.addEventListener("touchstart", (e) => {
+    if (!dayMode() || e.touches.length !== 1) { swipe = null; return; }
+    swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  scroller.addEventListener("touchend", (e) => {
+    if (!swipe || touchDragging || justDragged) { swipe = null; return; }
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) stepDay(dx < 0 ? 1 : -1);
+  });
+
+  // 캘린더 높이 = 화면에서 고정 툴바를 뺀 만큼
+  const toolbar = document.querySelector(".toolbar");
+  const innerScroll = () => scroller.scrollHeight > scroller.clientHeight + 1;
+  const syncToolbarH = () => document.documentElement.style.setProperty("--toolbar-h", `${toolbar.offsetHeight}px`);
+  window.addEventListener("resize", syncToolbarH);
+  mobileMq.addEventListener("change", () => { syncToolbarH(); applyView(); });
 
   // 겹치는 일정은 나란히 배치
   function layoutLanes(list) {
@@ -242,14 +330,23 @@
     let best = null;
     for (const col of cols.values()) {
       const r = col.getBoundingClientRect();
+      if (!r.width) continue; // 하루 보기에서 숨겨진 날짜
       if (x >= r.left && x < r.right) return col;
       if (!best || Math.abs(x - (r.left + r.width / 2)) < Math.abs(x - (best.r.left + best.r.width / 2))) best = { col, r };
     }
     return best.col;
   }
 
+  // 터치: 길게 눌러야 드래그 시작 (그냥 쓸면 스크롤). 드래그 중엔 스크롤을 막음.
+  const LONG_PRESS = 350;
+  let touchDragging = false;
+  let justDragged = false;
+  document.addEventListener("touchmove", (e) => { if (touchDragging) e.preventDefault(); }, { passive: false });
+  cal.addEventListener("contextmenu", (e) => { if (e.target.closest(".ev")) e.preventDefault(); });
+
   function startDrag(e, ev, node) {
     if (e.button !== 0) return;
+    const isTouch = e.pointerType === "touch";
     const mode = e.target.classList.contains("grip") ? "resize" : "move";
     const h = slotH();
     const nodeRect = node.getBoundingClientRect();
@@ -257,8 +354,18 @@
     const x0 = e.clientX, y0 = e.clientY;
     const dur = toMin(ev.end) - toMin(ev.start);
     const draft = { ...ev };
-    let started = false, lastTarget = null, autoScroll = 0, lastPt = { x: x0, y: y0 };
-
+    let started = false, lastTarget = null, lastPt = { x: x0, y: y0 };
+    let autoScroll = null; // { x, y } px/frame
+    let armed = !isTouch, moved = false;
+    let pressTimer = null;
+    if (isTouch) {
+      pressTimer = setTimeout(() => {
+        armed = true;
+        touchDragging = true;
+        node.classList.add("armed");
+        try { navigator.vibrate && navigator.vibrate(12); } catch (_) { /* ignore */ }
+      }, LONG_PRESS);
+    }
 
     const update = () => {
       const { x, y } = lastPt;
@@ -281,36 +388,65 @@
 
     const tick = () => {
       if (!autoScroll) return;
-      scroller.scrollTop += autoScroll;
+      if (innerScroll()) scroller.scrollTop += autoScroll.y;
+      else window.scrollBy(0, autoScroll.y);
+      scroller.scrollLeft += autoScroll.x;
       update();
       requestAnimationFrame(tick);
     };
 
     const onMove = (m) => {
       lastPt = { x: m.clientX, y: m.clientY };
+      const dist = Math.hypot(m.clientX - x0, m.clientY - y0);
+      if (!armed) {
+        // 길게 누르기 전에 움직임 → 스크롤로 보고 드래그 포기
+        if (dist > 8) { moved = true; cleanup(); }
+        return;
+      }
       if (!started) {
-        if (Math.hypot(m.clientX - x0, m.clientY - y0) < 5) return;
+        if (dist < 5) return;
         started = true;
         node.classList.add("dragging");
       }
       const sr = scroller.getBoundingClientRect();
-      const prev = autoScroll;
-      autoScroll = m.clientY > sr.bottom - 40 ? 8 : m.clientY < sr.top + 90 && scroller.scrollTop > 0 ? -8 : 0;
-      if (autoScroll && !prev) requestAnimationFrame(tick);
+      // 세로 자동 스크롤: 데스크톱은 캘린더 안쪽, 모바일은 페이지 전체
+      const inner = innerScroll();
+      const vTop = inner ? sr.top + 90 : toolbar.getBoundingClientRect().bottom + 30;
+      const vBottom = inner ? sr.bottom : window.innerHeight;
+      const canUp = inner ? scroller.scrollTop > 0 : window.scrollY > 0;
+      const y = m.clientY > vBottom - 40 ? 8 : m.clientY < vTop && canUp ? -8 : 0;
+      const x = m.clientX > sr.right - 30 ? 8 : m.clientX < sr.left + 70 && scroller.scrollLeft > 0 ? -8 : 0;
+      const had = !!autoScroll;
+      autoScroll = x || y ? { x, y } : null;
+      if (autoScroll && !had) requestAnimationFrame(tick);
       update();
     };
 
-    const onUp = () => {
+    const cleanup = () => {
+      clearTimeout(pressTimer);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
-      autoScroll = 0;
+      autoScroll = null;
+      touchDragging = false;
       lastTarget?.classList.remove("drop-target");
-      node.classList.remove("dragging");
-      if (!started) { openEditor(ev); return; }
+      node.classList.remove("dragging", "armed");
+    };
+
+    const onUp = (u) => {
+      cleanup();
+      if (!started) {
+        // 탭(또는 제자리 길게 누르기) → 편집. 스크롤·취소였다면 아무것도 안 함.
+        if (u.type === "pointerup" && !moved) openEditor(ev);
+        return;
+      }
+      justDragged = true;
+      setTimeout(() => (justDragged = false), 50);
       Object.assign(ev, { date: draft.date, start: draft.start, end: draft.end });
+      if (dayMode()) activeDate = ev.date;
       persist();
       renderEvents();
+      applyView();
       cal.querySelector(`.ev[data-id="${ev.id}"]`)?.focus({ preventScroll: true });
     };
 
@@ -380,9 +516,11 @@
         events.push({ id: "e" + Date.now().toString(36), ...data, ...(note ? { note } : {}) });
       }
     } else return;
+    if (action === "save" && dayMode()) activeDate = form.date.value; // 날짜를 바꿨으면 그 날로 이동
     editing = null;
     persist();
     renderEvents();
+    applyView();
   });
 
   // ---------- export / reset ----------
@@ -434,12 +572,21 @@ window.TRIP = ${body};
   // ---------- init ----------
   renderHeader();
   buildGrid();
+  buildDayTabs();
   fillSelects();
   renderEvents();
+  applyView();
   updateSaveState();
   renderRestoreBanner();
-  // 첫 일정 근처로 스크롤
-  const first = Math.min(...events.map((e) => toMin(e.start)), 9 * 60);
-  scroller.scrollTop = Math.max(0, ((first - DAY_START) / STEP - 1) * slotH());
+  syncToolbarH();
+  // 아침 첫 일정 근처로 스크롤 (자정 넘어 이어지는 일정은 건너뜀)
+  const mornings = events.map((e) => toMin(e.start)).filter((m) => m >= 5 * 60);
+  const first = Math.min(...mornings, 8 * 60);
+  const offset = Math.max(0, ((first - DAY_START) / STEP - 1) * slotH());
+  if (innerScroll()) scroller.scrollTop = offset;
+  else {
+    const col = cols.get(activeDate);
+    window.scrollTo(0, col.getBoundingClientRect().top + window.scrollY + offset - toolbar.offsetHeight - 8);
+  }
   setInterval(renderNowLine, 60000);
 })();
