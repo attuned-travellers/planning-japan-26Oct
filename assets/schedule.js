@@ -103,7 +103,7 @@ window.TRIP = {
     {"id":"emumtn1cl","date":"2026-10-20","start":"08:00","end":"09:00","title":"아침밥","tag":"food"},
     {"id":"emumptvhd","date":"2026-10-20","start":"11:00","end":"16:00","title":"(백) 개인약속 (화or수or목)","tag":"rest"},
     {"id":"e10","date":"2026-10-20","start":"12:00","end":"13:00","title":"점심 (Eitaro 유자라멘)","tag":"food"},
-    {"id":"e13","date":"2026-10-20","start":"17:30","end":"18:30","title":"저녁 (TBD)","tag":"food"},
+    {"id":"e13","date":"2026-10-20","start":"19:00","end":"20:00","title":"저녁 (TBD)","tag":"food"},
     {"id":"emumruo0e","date":"2026-10-20","start":"21:00","end":"24:00","title":"시죠포차 (New Shinmachi)","tag":"food"},
 
     {"id":"emumrvlib","date":"2026-10-21","start":"00:00","end":"01:30","title":"숙소 복귀","tag":"rest"},
@@ -111,11 +111,11 @@ window.TRIP = {
     {"id":"emumtn8sv","date":"2026-10-21","start":"08:00","end":"09:00","title":"아침밥","tag":"food"},
     {"id":"emumr7vq1","date":"2026-10-21","start":"11:00","end":"16:00","title":"(백) 개인약속 (화or수or목)","tag":"rest"},
     {"id":"emumj9yjw","date":"2026-10-21","start":"12:00","end":"13:00","title":"점심 (TBD)","tag":"food"},
-    {"id":"emumjahqv","date":"2026-10-21","start":"13:30","end":"14:30","title":"저녁 (TBD)","tag":"food"},
-    {"id":"e14","date":"2026-10-21","start":"14:30","end":"16:00","title":"쇼핑","tag":"shop"},
+    {"id":"emunng0k3","date":"2026-10-21","start":"15:00","end":"16:00","title":"(송) 이동/교토→간사이공항(?터미널)","tag":"move"},
     {"id":"emumjbsvy","date":"2026-10-21","start":"16:00","end":"16:30","title":"(송) 간사이공항 도착","tag":"move"},
     {"id":"emumsybdw","date":"2026-10-21","start":"16:30","end":"17:30","title":"(송) 쇼핑 (면세점)","tag":"shop"},
     {"id":"emumjc9jy","date":"2026-10-21","start":"17:30","end":"19:00","title":"(송) 비행편/오사카→김해","tag":"move"},
+    {"id":"emumjahqv","date":"2026-10-21","start":"19:00","end":"20:00","title":"저녁 (TBD)","tag":"food"},
     {"id":"emumjd80v","date":"2026-10-21","start":"20:00","end":"21:00","title":"(송) 이동/김해공항→집","tag":"move"},
     {"id":"emumw0szx","date":"2026-10-21","start":"21:00","end":"24:00","title":"시죠포차 (New Shinmachi)","tag":"food"},
 
